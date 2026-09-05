@@ -1,12 +1,6 @@
-/**
- * Local Party - Controller principal
- */
-
-// Global App State & Config
 const notyf = new Notyf({ duration: 2000, position: { x: 'center', y: 'top' } });
 const AVATAR_COLORS = ['#38bdf8', '#f43f5e', '#a855f7', '#34d399', '#fbbf24', '#f472b6', '#818cf8'];
 
-// Inicialização segura do Socket.IO
 let socket;
 if (typeof io !== 'undefined') {
     socket = io("https://local-party.herokuapp.com", {
@@ -17,7 +11,6 @@ if (typeof io !== 'undefined') {
     socket = { on: () => {}, emit: () => {} };
 }
 
-// Helpers
 function randomString(length, chars) {
     let result = '';
     for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
@@ -38,13 +31,11 @@ function formatTimeStamp(actionState, username, secondsContext) {
     seconds = seconds < 10 ? '0' + seconds : seconds;
 
     let timeText = `${minutes}:${seconds}`;
-    if (hours !== "00" && hours !== 0) {
-        timeText = `${hours}:${minutes}:${seconds}`;
-    }
+    if (hours !== "00" && hours !== 0) timeText = `${hours}:${minutes}:${seconds}`;
+    
     return `${username} ${actionState} o vídeo em ${timeText}`;
 }
 
-// Renderização de Mensagens no Chat
 function appendChatMessage(message, isService = false) {
     const messagesBox = document.getElementById("messages-box");
     if (!messagesBox) return;
@@ -64,14 +55,11 @@ function appendChatMessage(message, isService = false) {
     } else {
         const container = document.createElement("div");
         container.className = "msg-user-container";
-
         const initial = message.name ? message.name.charAt(0).toUpperCase() : "U";
         const avatarBg = message.pfp || "#6366f1";
 
         container.innerHTML = `
-            <div class="msg-avatar" style="background-color: ${avatarBg}">
-                ${initial}
-            </div>
+            <div class="msg-avatar" style="background-color: ${avatarBg}">${initial}</div>
             <div class="msg-body">
                 <span class="msg-username" style="color: ${avatarBg}">${message.name}</span>
                 <div class="msg-content">${message.content}</div>
@@ -88,20 +76,16 @@ function updateMemberCount(count) {
     if (memberCount) memberCount.textContent = count;
 }
 
-// Controle de Navegação entre Telas
 function switchView(viewId) {
     const views = ['landing', 'create', 'join', 'room'];
     views.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.style.display = (id === viewId) ? (id === 'room' ? 'flex' : 'flex') : 'none';
-        }
+        if (el) el.style.display = (id === viewId) ? 'flex' : 'none';
     });
 }
 
 function enterRoomUI(roomName, roomCode) {
     const videoPlayer = document.getElementById("video-player");
-
     document.getElementById("roomNameText").innerHTML = roomName;
     document.getElementById("roomCodeText").innerHTML = roomCode;
 
@@ -118,66 +102,50 @@ function enterRoomUI(roomName, roomCode) {
     switchView('room');
 }
 
-// Configuração de Eventos de Interface (DOM Load)
+// Configuração dos Botões e Inputs DOM
 document.addEventListener("DOMContentLoaded", () => {
-    // Configurações do formulário Criar Sala (Abas Arquivo / URL)
-    const btnCreateTypeFile = document.getElementById("btnCreateTypeFile");
-    const btnCreateTypeUrl = document.getElementById("btnCreateTypeUrl");
-    const createSectionFile = document.getElementById("createSectionFile");
-    const createSectionUrl = document.getElementById("createSectionUrl");
+    if (!localStorage.getItem("username")) localStorage.setItem("username", "convidado");
+    if (!localStorage.getItem("pfpUrl")) localStorage.setItem("pfpUrl", getRandomItem(AVATAR_COLORS));
 
-    if (btnCreateTypeFile && btnCreateTypeUrl) {
-        btnCreateTypeFile.addEventListener("click", () => {
-            btnCreateTypeFile.classList.add("active");
-            btnCreateTypeUrl.classList.remove("active");
-            createSectionFile.classList.remove("d-none");
-            createSectionUrl.classList.add("d-none");
-        });
+    // Abas de seleção Criar Sala
+    document.getElementById("btnCreateTypeFile")?.addEventListener("click", () => {
+        document.getElementById("btnCreateTypeFile").classList.add("active");
+        document.getElementById("btnCreateTypeUrl").classList.remove("active");
+        document.getElementById("createSectionFile").classList.remove("d-none");
+        document.getElementById("createSectionUrl").classList.add("d-none");
+    });
 
-        btnCreateTypeUrl.addEventListener("click", () => {
-            btnCreateTypeUrl.classList.add("active");
-            btnCreateTypeFile.classList.remove("active");
-            createSectionUrl.classList.remove("d-none");
-            createSectionFile.classList.add("d-none");
-        });
-    }
+    document.getElementById("btnCreateTypeUrl")?.addEventListener("click", () => {
+        document.getElementById("btnCreateTypeUrl").classList.add("active");
+        document.getElementById("btnCreateTypeFile").classList.remove("active");
+        document.getElementById("createSectionUrl").classList.remove("d-none");
+        document.getElementById("createSectionFile").classList.add("d-none");
+    });
 
-    // Configurações do formulário Entrar na Sala (Abas Arquivo / URL)
-    const btnJoinTypeFile = document.getElementById("btnJoinTypeFile");
-    const btnJoinTypeUrl = document.getElementById("btnJoinTypeUrl");
-    const joinSectionFile = document.getElementById("joinSectionFile");
-    const joinSectionUrl = document.getElementById("joinSectionUrl");
+    // Abas de seleção Entrar na Sala
+    document.getElementById("btnJoinTypeFile")?.addEventListener("click", () => {
+        document.getElementById("btnJoinTypeFile").classList.add("active");
+        document.getElementById("btnJoinTypeUrl").classList.remove("active");
+        document.getElementById("joinSectionFile").classList.remove("d-none");
+        document.getElementById("joinSectionUrl").classList.add("d-none");
+    });
 
-    if (btnJoinTypeFile && btnJoinTypeUrl) {
-        btnJoinTypeFile.addEventListener("click", () => {
-            btnJoinTypeFile.classList.add("active");
-            btnJoinTypeUrl.classList.remove("active");
-            joinSectionFile.classList.remove("d-none");
-            joinSectionUrl.classList.add("d-none");
-        });
+    document.getElementById("btnJoinTypeUrl")?.addEventListener("click", () => {
+        document.getElementById("btnJoinTypeUrl").classList.add("active");
+        document.getElementById("btnJoinTypeFile").classList.remove("active");
+        document.getElementById("joinSectionUrl").classList.remove("d-none");
+        document.getElementById("joinSectionFile").classList.add("d-none");
+    });
 
-        btnJoinTypeUrl.addEventListener("click", () => {
-            btnJoinTypeUrl.classList.add("active");
-            btnJoinTypeFile.classList.remove("active");
-            joinSectionUrl.classList.remove("d-none");
-            joinSectionFile.classList.add("d-none");
-        });
-    }
+    // Copiar código
+    document.getElementById('roomCodeText')?.addEventListener('click', () => {
+        let text = document.getElementById('roomCodeText').innerHTML.trim();
+        if (text && text !== "----") {
+            navigator.clipboard.writeText(text).then(() => notyf.success("Código copiado!"));
+        }
+    });
 
-    // Copiar Código da Sala
-    const roomCodeText = document.getElementById('roomCodeText');
-    if (roomCodeText) {
-        roomCodeText.addEventListener('click', () => {
-            let text = roomCodeText.innerHTML.trim();
-            if (text && text !== "----") {
-                navigator.clipboard.writeText(text).then(() => {
-                    notyf.success("Código copiado!");
-                });
-            }
-        });
-    }
-
-    // Inputs de Mídia Local/URL
+    // Inputs de Mídia
     document.getElementById("createFileInput")?.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -211,26 +179,58 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// Eventos do Socket.IO (WebSockets)
+// Resposta aos Eventos do Socket
 socket.on('user-joined', data => {
     if (data.roomCode == localStorage.getItem("roomCode")) {
         appendChatMessage({ name: data.name, content: `${data.name} entrou na sala.`, pfp: data.pfp }, true);
         updateMemberCount(data.members);
 
-        // Se o novo usuário não possuir a URL e a sala for via URL, sincroniza
-        if (data.videoPath && data.videoPath.startsWith('http')) {
-            const videoPlayer = document.getElementById("video-player");
-            if (videoPlayer && !videoPlayer.getAttribute("src")) {
-                videoPlayer.setAttribute("src", data.videoPath);
-                videoPlayer.load();
-            }
+        // Se o Host perceber um novo usuário entrando, ele envia a URL e a posição atual do vídeo!
+        const videoPlayer = document.getElementById("video-player");
+        const videoPath = localStorage.getItem("videoPath");
+
+        if (videoPath && videoPlayer) {
+            socket.emit("playerControl", {
+                message: "syncUrl|" + videoPath,
+                context: videoPlayer.currentTime,
+                isPlaying: !videoPlayer.paused,
+                roomCode: localStorage.getItem("roomCode")
+            });
         }
     }
 });
 
-socket.on('updateMemberInfo', data => {
-    if (data.roomCode == localStorage.getItem("roomCode")) {
-        updateMemberCount(data.members);
+let allowEmit = true;
+socket.on('playerControlUpdate', data => {
+    const videoPlayer = document.getElementById("video-player");
+    if (!videoPlayer) return;
+
+    // Sincronização Automática de URL e Posição do Vídeo para Convidados
+    if (data.message && data.message.startsWith("syncUrl|")) {
+        const videoUrl = data.message.replace("syncUrl|", "");
+        if (videoUrl && videoPlayer.getAttribute("src") !== videoUrl) {
+            localStorage.setItem("videoPath", videoUrl);
+            videoPlayer.setAttribute("src", videoUrl);
+            videoPlayer.currentTime = data.context || 0;
+            videoPlayer.load();
+            if (data.isPlaying) videoPlayer.play();
+            appendChatMessage({ name: "Local Party", content: "Vídeo sincronizado via URL!" }, true);
+        }
+        return;
+    }
+
+    if (data.message == "play") {
+        videoPlayer.currentTime = data.context;
+        allowEmit = false;
+        videoPlayer.play();
+        appendChatMessage({ name: "Local Party", content: formatTimeStamp("deu play em", data.username, data.context) }, true);
+    }
+
+    if (data.message == "pause") {
+        videoPlayer.currentTime = data.context;
+        allowEmit = false;
+        videoPlayer.pause();
+        appendChatMessage({ name: "Local Party", content: formatTimeStamp("pausou em", data.username, data.context) }, true);
     }
 });
 
@@ -243,30 +243,7 @@ socket.on('left', data => {
     updateMemberCount(data.members);
 });
 
-let allowEmit = true;
-socket.on('playerControlUpdate', data => {
-    const videoPlayer = document.getElementById("video-player");
-    if (!videoPlayer) return;
-
-    if (data.message == "play") {
-        videoPlayer.currentTime = data.context;
-        allowEmit = false;
-        videoPlayer.play();
-        appendChatMessage({ name: "Local Party", content: formatTimeStamp("deu play em", data.username, data.context) }, true);
-    }
-    if (data.message == "pause") {
-        videoPlayer.currentTime = data.context;
-        allowEmit = false;
-        videoPlayer.pause();
-        appendChatMessage({ name: "Local Party", content: formatTimeStamp("pausou em", data.username, data.context) }, true);
-    }
-});
-
-// Inicialização de Dados Locais do Usuário
-if (!localStorage.getItem("username")) localStorage.setItem("username", "convidado");
-if (!localStorage.getItem("pfpUrl")) localStorage.setItem("pfpUrl", getRandomItem(AVATAR_COLORS));
-
-// Cliques nos Botões e Ações Principais
+// Cliques nos Botões Principais
 document.addEventListener("click", (e) => {
     const target = e.target;
 
@@ -278,7 +255,7 @@ document.addEventListener("click", (e) => {
         switchView('join');
     }
 
-    if (target.classList.contains("back-btn") || target.closest(".back-btn")) {
+    if (target.id == "backButtonFromCreate" || target.id == "backButtonFromJoin" || target.closest(".back-btn")) {
         switchView('landing');
     }
 
@@ -289,7 +266,7 @@ document.addEventListener("click", (e) => {
         const videoPath = localStorage.getItem("videoPath");
 
         if (!roomName || !username || !videoPath) {
-            document.getElementById("createRoomText").innerHTML = "Preencha todos os campos e selecione o vídeo ou digite a URL.";
+            document.getElementById("createRoomText").innerHTML = "Preencha todos os campos e escolha uma mídia ou URL.";
             return;
         }
 
@@ -298,22 +275,13 @@ document.addEventListener("click", (e) => {
         localStorage.setItem("username", username);
         localStorage.setItem("roomCode", roomCode);
 
-        const videoSize = localStorage.getItem("videoSize") || "URL";
-
-        socket.emit('new-user-joined', {
-            name: username,
-            roomCode: roomCode,
-            pfp: localStorage.getItem("pfpUrl"),
-            videoPath: videoPath
-        });
-
+        socket.emit('new-user-joined', { name: username, roomCode: roomCode, pfp: localStorage.getItem("pfpUrl") });
         enterRoomUI(roomName, roomCode);
 
-        // Notifica API backend
         fetch("https://local-party.herokuapp.com/room/create", {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "roomName": roomName, "roomCode": roomCode, "videoSize": videoSize })
+            body: JSON.stringify({ "roomName": roomName, "roomCode": roomCode, "videoSize": localStorage.getItem("videoSize") || "URL" })
         }).catch(() => {});
     }
 
@@ -321,7 +289,6 @@ document.addEventListener("click", (e) => {
     if (target.id == "roomJoinButton" || target.closest("#roomJoinButton")) {
         const inputRoomCode = document.getElementById("roomCode").value.trim();
         const username = document.getElementById("join-username").value.trim();
-        const videoSize = localStorage.getItem("videoSize") || "URL";
 
         if (!inputRoomCode || !username) {
             document.getElementById("joinRoomText").innerHTML = "Preencha o código da sala e seu apelido.";
@@ -331,23 +298,17 @@ document.addEventListener("click", (e) => {
         localStorage.setItem("roomCode", inputRoomCode);
         localStorage.setItem("username", username);
 
-        socket.emit('new-user-joined', {
-            name: username,
-            roomCode: inputRoomCode,
-            pfp: localStorage.getItem("pfpUrl"),
-            videoPath: localStorage.getItem("videoPath")
-        });
-
+        socket.emit('new-user-joined', { name: username, roomCode: inputRoomCode, pfp: localStorage.getItem("pfpUrl") });
         enterRoomUI("SALA " + inputRoomCode, inputRoomCode);
 
         fetch("https://local-party.herokuapp.com/room/join", {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "roomCode": inputRoomCode, "videoSize": videoSize })
+            body: JSON.stringify({ "roomCode": inputRoomCode, "videoSize": localStorage.getItem("videoSize") || "URL" })
         }).catch(() => {});
     }
 
-    // Ação: Sair da Sala
+    // Sair da Sala
     if (target.id == "roomLeaveButton" || target.closest("#roomLeaveButton")) {
         socket.emit('disconnectUser', {
             roomCode: localStorage.getItem("roomCode"),
@@ -358,7 +319,7 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// Envio de Mensagens do Chat
+// Form do Chat
 const chatForm = document.getElementById("send-form");
 if (chatForm) {
     chatForm.addEventListener('submit', (e) => {
@@ -378,7 +339,7 @@ if (chatForm) {
     });
 }
 
-// Sincronização de Play/Pause do Vídeo
+// Player Play/Pause Event Sync
 const videoPlayer = document.getElementById("video-player");
 if (videoPlayer) {
     videoPlayer.addEventListener('play', () => {
