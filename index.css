@@ -1,6 +1,9 @@
+/* ==========================================
+   DESIGN SYSTEM & VARIÁVEIS
+   ========================================== */
 :root {
   --bg-main: #0a0d14;
-  --bg-card: rgba(20, 27, 41, 0.82);
+  --bg-card: rgba(20, 27, 41, 0.85);
   --bg-chat: #0f172a;
   --accent-primary: #6366f1;
   --accent-hover: #4f46e5;
@@ -26,7 +29,35 @@ body, html {
   overflow: hidden;
 }
 
-/* Logo Ícone */
+/* ==========================================
+   COMPONENTES DE TELA (GLASSMORPHISM)
+   ========================================== */
+.page-view {
+  display: none;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(circle at top right, #1e1b4b, var(--bg-main));
+}
+
+.landing-view {
+  display: flex;
+}
+
+.card-glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 440px;
+}
+
 .logo-box {
   display: flex;
   justify-content: center;
@@ -49,34 +80,6 @@ body, html {
 
 .hero-logo-icon:hover {
   transform: scale(1.05) rotate(-3deg);
-}
-
-/* Container Glassmorphism */
-.page-container {
-  display: none;
-  height: 100vh;
-  height: 100dvh;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: radial-gradient(circle at top right, #1e1b4b, var(--bg-main));
-}
-
-/* A Landing Page é exibida imediatamente ao abrir */
-.landing {
-  display: flex;
-}
-
-.card-glass {
-  background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  width: 100%;
-  max-width: 440px;
 }
 
 .head-title {
@@ -106,12 +109,14 @@ body, html {
   font-size: 0.85rem;
 }
 
-/* Botões de Seleção de Fonte (Arquivo / URL) */
+/* ==========================================
+   INPUTS & BOTÕES
+   ========================================== */
 .btn-type {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   padding: 8px 12px;
 }
@@ -122,7 +127,6 @@ body, html {
   border-color: var(--accent-primary);
 }
 
-/* Inputs & Botões Personalizados */
 .form-label {
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -145,10 +149,6 @@ body, html {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
   color: var(--text-main);
   outline: none;
-}
-
-.custom-input::placeholder {
-  color: #64748b;
 }
 
 .btn-custom {
@@ -183,9 +183,8 @@ body, html {
 }
 
 /* ==========================================
-   LAYOUT DA SALA (MOBILE & DESKTOP)
+   SALA DE VÍDEO & CHAT
    ========================================== */
-
 .room-wrapper {
   display: none;
   height: 100vh;
@@ -221,7 +220,6 @@ body, html {
   border-top: 1px solid var(--border-color);
 }
 
-/* Layout Desktop (Lado a Lado) */
 @media (min-width: 992px) {
   .room-wrapper {
     flex-direction: row;
@@ -245,7 +243,6 @@ body, html {
   }
 }
 
-/* Chat Header */
 .chat-header {
   padding: 12px 16px;
   background: rgba(15, 23, 42, 0.95);
@@ -300,7 +297,9 @@ body, html {
   font-weight: 600;
 }
 
-/* Área de Mensagens */
+/* ==========================================
+   MENSAGENS & AVATARES
+   ========================================== */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -310,7 +309,6 @@ body, html {
   gap: 12px;
 }
 
-/* Mensagens de Usuário com Avatares Estilosos */
 .msg-user-container {
   display: flex;
   align-items: flex-start;
@@ -353,7 +351,6 @@ body, html {
   word-break: break-word;
 }
 
-/* Mensagens de Serviço (Sistema) */
 .msg-service {
   background: var(--service-bg);
   color: var(--service-color);
@@ -372,7 +369,6 @@ body, html {
   transform: translateY(-8px);
 }
 
-/* Barra de Entrada de Chat */
 .chat-input-container {
   padding: 12px 16px;
   background: rgba(15, 23, 42, 0.95);
@@ -404,7 +400,6 @@ body, html {
   color: white;
 }
 
-/* Scrollbar Customizada */
 ::-webkit-scrollbar {
   width: 5px;
 }
