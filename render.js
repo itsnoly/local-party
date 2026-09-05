@@ -1,5 +1,16 @@
 const notyf = new Notyf({ duration: 1500, position: { x: 'center', y: 'top' } });
 
+// Inicialização segura do Socket.IO sem travar o app
+let socket;
+if (typeof io !== 'undefined') {
+    socket = io("https://local-party.herokuapp.com", {
+        transports: ['websocket', 'polling'],
+        timeout: 5000
+    });
+} else {
+    socket = { on: () => {}, emit: () => {} };
+}
+
 function randomString(length, chars) {
     let result = '';
     for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
@@ -48,7 +59,7 @@ const append = (message, isService = false) => {
         const container = document.createElement("div");
         container.className = "msg-user-container";
         
-        // Pega a primeira letra do nome do usuário para o Avatar
+        // Pega a primeira letra do nome para o Avatar
         const initial = message.name ? message.name.charAt(0).toUpperCase() : "U";
         const avatarBg = message.pfp || "#6366f1";
 
@@ -78,32 +89,37 @@ function updateMemberCount(count) {
 }
 
 // Alternar entre Arquivo Local e Link MP4
-const btnTypeFile = document.getElementById("btnTypeFile");
-const btnTypeUrl = document.getElementById("btnTypeUrl");
-const sectionLocalFile = document.getElementById("sectionLocalFile");
-const sectionUrlLink = document.getElementById("sectionUrlLink");
+document.addEventListener("DOMContentLoaded", function() {
+    const btnTypeFile = document.getElementById("btnTypeFile");
+    const btnTypeUrl = document.getElementById("btnTypeUrl");
+    const sectionLocalFile = document.getElementById("sectionLocalFile");
+    const sectionUrlLink = document.getElementById("sectionUrlLink");
 
-if (btnTypeFile && btnTypeUrl) {
-    btnTypeFile.addEventListener("click", () => {
-        btnTypeFile.classList.add("active");
-        btnTypeUrl.classList.remove("active");
-        sectionLocalFile.classList.remove("d-none");
-        sectionUrlLink.classList.add("d-none");
-    });
+    if (btnTypeFile && btnTypeUrl) {
+        btnTypeFile.addEventListener("click", () => {
+            btnTypeFile.classList.add("active");
+            btnTypeUrl.classList.remove("active");
+            sectionLocalFile.classList.remove("d-none");
+            sectionUrlLink.classList.add("d-none");
+        });
 
-    btnTypeUrl.addEventListener("click", () => {
-        btnTypeUrl.classList.add("active");
-        btnTypeFile.classList.remove("active");
-        sectionUrlLink.classList.remove("d-none");
-        sectionLocalFile.classList.add("d-none");
-    });
-}
+        btnTypeUrl.addEventListener("click", () => {
+            btnTypeUrl.classList.add("active");
+            btnTypeFile.classList.remove("active");
+            sectionUrlLink.classList.remove("d-none");
+            sectionLocalFile.classList.add("d-none");
+        });
+    }
 
-document.getElementById('roomCodeText').addEventListener('click', () => {
-    let text = document.getElementById('roomCodeText').innerHTML.trim();
-    if (text && text !== "----") {
-        navigator.clipboard.writeText(text).then(() => {
-            notyf.success("Código copiado!");
+    const roomCodeText = document.getElementById('roomCodeText');
+    if (roomCodeText) {
+        roomCodeText.addEventListener('click', () => {
+            let text = roomCodeText.innerHTML.trim();
+            if (text && text !== "----") {
+                navigator.clipboard.writeText(text).then(() => {
+                    notyf.success("Código copiado!");
+                });
+            }
         });
     }
 });
@@ -114,11 +130,6 @@ const landingPage = document.getElementById("landing");
 const createPage = document.getElementById("create");
 const joinPage = document.getElementById("join");
 const roomPage = document.getElementById("room");
-const socket = io.connect("https://local-party.herokuapp.com");
-
-socket.on('connect', function () {
-    landingPage.style.display = "flex"; 
-});
 
 socket.on('user-joined', data => {
     if (data.roomCode == localStorage.getItem("roomCode")) {
@@ -216,7 +227,15 @@ document.addEventListener("click", function (e) {
                 roomPage.style.display = "flex";
             }
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            console.log('error', error);
+            // Fallback: entra na sala mesmo se a API do heroku não responder
+            localStorage.setItem("roomCode", roomCode);
+            appendData(roomName, roomCode);
+            createPage.style.display = "none";
+            document.title = `Local Party | ${roomName}`;
+            roomPage.style.display = "flex";
+        });
     }
 
     if (e.target.id == "joinRoomButton") {
@@ -276,23 +295,27 @@ document.addEventListener("click", function (e) {
 
 // Envio de Mensagens
 const form = document.getElementById("send-form");
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const messageInput = document.getElementById("messageInp").value;
-    if (messageInput.trim().length !== 0) {
-        socket.emit('send', messageInput);
-        append({
-            name: localStorage.getItem("username"),
-            content: messageInput,
-            pfp: localStorage.getItem("pfpUrl")
-        }, false);
-        document.getElementById("messageInp").value = "";
-    }
-});
+if (form) {
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const messageInput = document.getElementById("messageInp").value;
+        if (messageInput.trim().length !== 0) {
+            socket.emit('send', messageInput);
+            append({
+                name: localStorage.getItem("username"),
+                content: messageInput,
+                pfp: localStorage.getItem("pfpUrl")
+            }, false);
+            document.getElementById("messageInp").value = "";
+        }
+    });
+}
 
 let allowEmit = true;
-videoPlayer.addEventListener('play', videoControlsHandler, false);
-videoPlayer.addEventListener('pause', videoControlsHandler, false);
+if (videoPlayer) {
+    videoPlayer.addEventListener('play', videoControlsHandler, false);
+    videoPlayer.addEventListener('pause', videoControlsHandler, false);
+}
 
 function videoControlsHandler(e) {
     if (e.type == 'play') {

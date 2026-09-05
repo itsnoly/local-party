@@ -17,13 +17,18 @@
     <!-- Notyf -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <link rel="stylesheet" href="index.css">
+
+    <!-- Socket.IO via CDN de alta velocidade -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Render JS -->
     <script defer src="render.js"></script>
   </head>
   <body>
-    <!-- Landing Page -->
+    <!-- Landing Page (Visível por padrão) -->
     <div class="page-container landing" id="landing">
       <div class="card-glass text-center p-4">
-        <!-- Logo Moderno SVG -->
+        <!-- Logo Moderno -->
         <div class="logo-box mb-3">
           <div class="hero-logo-icon">
             <i class="fas fa-play"></i>
@@ -139,7 +144,7 @@
         <div class="chat-header">
           <div class="d-flex align-items-center justify-content-between w-100">
             <div class="d-flex align-items-center gap-2">
-              <button class="btn-leave" id="roomLeaveButton" data-toggle="tooltip" title="Sair da Sala">
+              <button class="btn-leave" id="roomLeaveButton" title="Sair da Sala">
                 <i class="fas fa-sign-out-alt"></i>
               </button>
               <h6 class="room-title mb-0" id="roomNameText">Nome da Sala</h6>
@@ -178,8 +183,7 @@
       </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://local-party.herokuapp.com/socket.io/socket.io.js"></script>
+    <!-- Bootstrap & Notyf Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
   </body>
