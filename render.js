@@ -1,11 +1,11 @@
-const notyf = new Notyf({ duration: 1500, position: { x: 'center', y: 'top' } });
+const notyf = new Notyf({ duration: 2000, position: { x: 'center', y: 'top' } });
 
-// Inicialização segura do Socket.IO sem travar o app
+// Conexão Socket.IO segura
 let socket;
 if (typeof io !== 'undefined') {
     socket = io("https://local-party.herokuapp.com", {
         transports: ['websocket', 'polling'],
-        timeout: 5000
+        timeout: 3000
     });
 } else {
     socket = { on: () => {}, emit: () => {} };
@@ -25,18 +25,13 @@ function time(state, username, context) {
     minutes = minutes < 10 ? '0' + minutes.toString() : minutes.toString();
     seconds = seconds < 10 ? '0' + seconds.toString() : seconds.toString();
     
-    let contentString = `${username} ${state} the video at ${minutes}:${seconds}`;
+    let contentString = `${username} ${state} o vídeo em ${minutes}:${seconds}`;
     if (hours !== "00" && hours !== 0) {
-        contentString = `${username} ${state} the video at ${hours}:${minutes}:${seconds}`;
+        contentString = `${username} ${state} o vídeo em ${hours}:${minutes}:${seconds}`;
     }
     return contentString;
 }
 
-/**
- * Adiciona mensagens ao chat.
- * @param {Object} message - Objeto com name, content e pfp (cor)
- * @param {Boolean} isService - Se true, é mensagem de serviço removida em 5s
- */
 const append = (message, isService = false) => {
     const messagesBox = document.getElementById("messages-box");
     if (!messagesBox) return;
@@ -48,7 +43,6 @@ const append = (message, isService = false) => {
         messagesBox.appendChild(msgDiv);
         messagesBox.scrollTop = messagesBox.scrollHeight;
 
-        // Auto-remover após 5 segundos
         setTimeout(() => {
             msgDiv.classList.add("fade-out");
             setTimeout(() => {
@@ -59,7 +53,6 @@ const append = (message, isService = false) => {
         const container = document.createElement("div");
         container.className = "msg-user-container";
         
-        // Pega a primeira letra do nome para o Avatar
         const initial = message.name ? message.name.charAt(0).toUpperCase() : "U";
         const avatarBg = message.pfp || "#6366f1";
 
@@ -88,7 +81,31 @@ function updateMemberCount(count) {
     if (memberCount) memberCount.textContent = count;
 }
 
-// Alternar entre Arquivo Local e Link MP4
+function enterRoomUI(roomName, roomCode) {
+    const landingPage = document.getElementById("landing");
+    const createPage = document.getElementById("create");
+    const joinPage = document.getElementById("join");
+    const roomPage = document.getElementById("room");
+    const videoPlayer = document.getElementById("video-player");
+
+    document.getElementById("roomNameText").innerHTML = roomName;
+    document.getElementById("roomCodeText").innerHTML = roomCode;
+
+    const videoPath = localStorage.getItem("videoPath");
+    if (videoPath && videoPlayer) {
+        videoPlayer.setAttribute("src", videoPath);
+        videoPlayer.load();
+    }
+
+    appendData(roomName, roomCode);
+    document.title = `Local Party | ${roomName}`;
+
+    if (landingPage) landingPage.style.display = "none";
+    if (createPage) createPage.style.display = "none";
+    if (joinPage) joinPage.style.display = "none";
+    if (roomPage) roomPage.style.display = "flex";
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     const btnTypeFile = document.getElementById("btnTypeFile");
     const btnTypeUrl = document.getElementById("btnTypeUrl");
@@ -183,117 +200,76 @@ if (localStorage.getItem("pfpUrl") == null) {
 }
 
 document.addEventListener("click", function (e) {
-    if (e.target.id == "createRoomButton") {
+    const target = e.target;
+
+    if (target.id == "createRoomButton" || target.closest("#createRoomButton")) {
         landingPage.style.display = "none";
         createPage.style.display = "flex";
     }
-    if (e.target.id == "roomCreateButton") {
-        const roomName = document.getElementById("roomname").value;
-        const username = document.getElementById("create-username").value;
 
-        if (roomName.length == 0 || username.length == 0 || !localStorage.getItem("videoPath")) {
-            document.getElementById("createRoomText").innerHTML = "Preencha todos os campos e selecione um vídeo ou URL.";
-            return;
-        }
-
-        localStorage.setItem("roomName", roomName);
-        localStorage.setItem("username", username);
-        const roomCode = randomString(5, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
-        
-        document.getElementById("createRoomText").innerHTML = "";
-        document.getElementById("roomNameText").innerHTML = roomName;
-        document.getElementById("roomCodeText").innerHTML = roomCode;
-        videoPlayer.setAttribute("src", localStorage.getItem("videoPath"));
-
-        var raw = JSON.stringify({
-            "roomName": roomName,
-            "roomCode": roomCode,
-            "videoSize": localStorage.getItem("videoSize") || "100"
-        });
-
-        fetch("https://local-party.herokuapp.com/room/create", {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: raw
-        })
-        .then(async (result) => {
-            const resp = await result.json();
-            if (resp.message == "success") {
-                localStorage.setItem("roomCode", roomCode);
-                appendData(roomName, roomCode);
-                socket.emit('new-user-joined', { name: localStorage.getItem("username"), roomCode: roomCode, pfp: localStorage.getItem("pfpUrl") });
-                createPage.style.display = "none";
-                document.title = `Local Party | ${roomName}`;
-                roomPage.style.display = "flex";
-            }
-        })
-        .catch(error => {
-            console.log('error', error);
-            // Fallback: entra na sala mesmo se a API do heroku não responder
-            localStorage.setItem("roomCode", roomCode);
-            appendData(roomName, roomCode);
-            createPage.style.display = "none";
-            document.title = `Local Party | ${roomName}`;
-            roomPage.style.display = "flex";
-        });
-    }
-
-    if (e.target.id == "joinRoomButton") {
+    if (target.id == "joinRoomButton" || target.closest("#joinRoomButton")) {
         landingPage.style.display = "none";
         joinPage.style.display = "flex";
     }
 
-    if (e.target.id == "roomJoinButton") {
-        const inputRoomCode = document.getElementById("roomCode").value;
-        const username = document.getElementById("join-username").value;
+    if (target.id == "backButton" || target.closest("#backButton")) {
+        joinPage.style.display = "none";
+        createPage.style.display = "none";
+        landingPage.style.display = "flex";
+    }
 
-        if (inputRoomCode.length == 0 || username.length == 0) {
-            document.getElementById("joinRoomText").innerHTML = "Preencha o código da sala e seu nome.";
+    if (target.id == "roomCreateButton" || target.closest("#roomCreateButton")) {
+        const roomName = document.getElementById("roomname").value.trim();
+        const username = document.getElementById("create-username").value.trim();
+
+        if (roomName.length === 0 || username.length === 0 || !localStorage.getItem("videoPath")) {
+            document.getElementById("createRoomText").innerHTML = "Preencha todos os campos e selecione um vídeo ou URL.";
             return;
         }
+
+        const roomCode = randomString(5, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        localStorage.setItem("roomName", roomName);
+        localStorage.setItem("username", username);
+        localStorage.setItem("roomCode", roomCode);
+
+        socket.emit('new-user-joined', { name: username, roomCode: roomCode, pfp: localStorage.getItem("pfpUrl") });
+        enterRoomUI(roomName, roomCode);
+
+        fetch("https://local-party.herokuapp.com/room/create", {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "roomName": roomName, "roomCode": roomCode, "videoSize": localStorage.getItem("videoSize") || "100" })
+        }).catch(() => {});
+    }
+
+    if (target.id == "roomJoinButton" || target.closest("#roomJoinButton")) {
+        const inputRoomCode = document.getElementById("roomCode").value.trim();
+        const username = document.getElementById("join-username").value.trim();
+
+        if (inputRoomCode.length === 0 || username.length === 0) {
+            document.getElementById("joinRoomText").innerHTML = "Preencha o código da sala e seu apelido.";
+            return;
+        }
+
+        localStorage.setItem("roomCode", inputRoomCode);
+        localStorage.setItem("username", username);
+
+        socket.emit('new-user-joined', { name: username, roomCode: inputRoomCode, pfp: localStorage.getItem("pfpUrl") });
+        enterRoomUI("SALA " + inputRoomCode, inputRoomCode);
 
         fetch("https://local-party.herokuapp.com/room/join", {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ "roomCode": inputRoomCode, "videoSize": localStorage.getItem("videoSize") || "100" })
-        })
-        .then(async (result) => {
-            const resp = await result.json();
-            if (resp.message != "success") {
-                document.getElementById("joinRoomText").innerHTML = resp.message;
-            } else {
-                document.getElementById("joinRoomText").innerHTML = "";
-                document.getElementById("roomNameText").innerHTML = resp.roomName;
-                document.getElementById("roomCodeText").innerHTML = resp.roomCode;
-                
-                localStorage.setItem("roomCode", inputRoomCode);
-                localStorage.setItem("username", username);
-                if (localStorage.getItem("videoPath")) {
-                    videoPlayer.setAttribute("src", localStorage.getItem("videoPath"));
-                }
-                appendData(resp.roomName, resp.roomCode);
-                socket.emit('new-user-joined', { name: username, roomCode: resp.roomCode, pfp: localStorage.getItem("pfpUrl") });
-                joinPage.style.display = "none";
-                document.title = `Local Party | ${resp.roomName}`;
-                roomPage.style.display = "flex";
-            }   
-        })
-        .catch(error => console.log('error', error));
+        }).catch(() => {});
     }
 
-    if (e.target.id == "roomLeaveButton" || e.target.closest("#roomLeaveButton")) {
+    if (target.id == "roomLeaveButton" || target.closest("#roomLeaveButton")) {
         socket.emit('disconnectUser', { roomCode: localStorage.getItem("roomCode"), name: localStorage.getItem("username"), pfp: localStorage.getItem("pfpUrl") });
         location.reload();
     }
-
-    if (e.target.id == "backButton") {
-        joinPage.style.display = "none";
-        createPage.style.display = "none";
-        landingPage.style.display = "flex";
-    }
 });
 
-// Envio de Mensagens
 const form = document.getElementById("send-form");
 if (form) {
     form.addEventListener('submit', (e) => {
@@ -333,7 +309,6 @@ function videoControlsHandler(e) {
     }
 }
 
-// Arquivo Local
 function onChangeFile() {
     const file = document.getElementById("file-id").files[0];
     if (!file) return;
@@ -350,7 +325,6 @@ function onChangeJoinFile() {
     localStorage.setItem("videoPath", path);
 }
 
-// Link Direto MP4 (URL)
 function onChangeUrl() {
     const url = document.getElementById("videoUrlInput").value.trim();
     if (url.length > 0) {
